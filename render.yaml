@@ -1,0 +1,40 @@
+services:
+  # Backend API Service
+  - type: web
+    name: xls-ai-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: MONGODB_URI
+        fromDatabase:
+          name: xls-ai-mongodb
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false # You'll set this manually in Render dashboard
+      - key: ENABLE_GEMINI
+        value: "true"
+      - key: GEMINI_MODEL
+        value: "gemini-1.5-flash-latest"
+    
+  # Frontend Static Site
+  - type: static
+    name: xls-ai-frontend
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: xls-ai-backend
+          property: host
+
+databases:
+  - name: xls-ai-mongodb
+    databaseName: xlsai
+    user: xlsai_user
