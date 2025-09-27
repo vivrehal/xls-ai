@@ -9,8 +9,6 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: 4000
       - key: MONGODB_URI
         fromDatabase:
           name: xls-ai-mongodb
@@ -21,18 +19,6 @@ services:
         value: "true"
       - key: GEMINI_MODEL
         value: "gemini-1.5-flash-latest"
-    
-  # Frontend Static Site
-  - type: static
-    name: xls-ai-frontend
-    buildCommand: cd frontend && npm install && npm run build
-    staticPublishPath: frontend/dist
-    envVars:
-      - key: VITE_API_URL
-        fromService:
-          type: web
-          name: xls-ai-backend
-          property: host
 
 databases:
   - name: xls-ai-mongodb
