@@ -10,7 +10,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 const app = express();
 
 // CORS configuration - allow multiple origins
-const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim());
+const allowedOrigins = process.env.CORS_ORIGINS?.split(',').map(o => o.trim()) || [];
 allowedOrigins.push('https://xls-ai-1.onrender.com'); // allow localhost with any port
 console.log('Allowed CORS origins:', allowedOrigins);
 
