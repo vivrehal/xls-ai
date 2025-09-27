@@ -3,7 +3,7 @@ import { Chart, ArcElement, LineElement, BarElement, CategoryScale, LinearScale,
 
 Chart.register(ArcElement, LineElement, BarElement, CategoryScale, LinearScale, PointElement, Tooltip, Legend, DoughnutController, PieController, LineController, BarController)
 
-function FileList({ files, selected, setSelected }) {
+function FileList({ files, selected, setSelected, apiBase }) {
   return (
     <div className="filelist">
       {files.map(f => (
@@ -24,7 +24,7 @@ function FileList({ files, selected, setSelected }) {
               <div className="small">{Math.round((f.size||0)/1024)} KB • {new Date(f.uploadedAt).toLocaleString()}</div>
             </div>
           </div>
-          <a className="btn" href={`${API_BASE}/files/${f.fileId}`}>Download</a>
+          <a className="btn" href={`${apiBase}/files/${f.fileId}`}>Download</a>
         </label>
         </div>
       ))}
@@ -210,7 +210,7 @@ export default function App() {
   const [result, setResult] = useState(null)
   const [msg, setMsg] = useState('')
 
-  const API_BASE = import.meta.env.VITE_API_URL || ''
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000'
   
   async function refreshFiles() {
     const res = await fetch(`${API_BASE}/files`)
@@ -267,7 +267,7 @@ export default function App() {
       <div className="grid">
         <div className="card">
           <h3>Files</h3>
-          <FileList files={files} selected={selected} setSelected={setSelected} />
+          <FileList files={files} selected={selected} setSelected={setSelected} apiBase={API_BASE} />
         </div>
         <div className="card">
           <h3>Ask</h3>

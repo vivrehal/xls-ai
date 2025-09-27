@@ -9,14 +9,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
 app.use(cors({
-    origin: (origin, callback) => {
-        const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',');
-        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    }
+    origin: ['https://xls-ai.onrender.com', 'http://localhost:5173']
 }));
 app.use(express.json({ limit: '4mb' }));
 
