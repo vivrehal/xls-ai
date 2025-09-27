@@ -47,12 +47,43 @@ const client = new MongoClient(mongoUri);
 let db, filesCol, bucket;
 
 async function initMongo() {
-  await client.connect();
-  db = client.db();
-  filesCol = db.collection('files');
-  bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+  try {
+    console.log('Connecting to MongoDB...', mongoUri ? 'URI provided' : 'No URI provided');
+    await client.connect();
+    console.log('MongoDB connected successfully');
+    
+    db = client.db();
+    filesCol = db.collection('files');
+    bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+    
+    console.log('MongoDB collections initialized');
+  } catch (error) {
+    console.error('MongoDB connection failed:', error);
+    throw error;
+  }
 }
-initMongo().catch(console.error);
+
+// Initialize MongoDB and handle errors
+let mongoReady = false;
+initMongo()
+  .then(() => {
+    mongoReady = true;
+    console.log('Database ready');
+  })
+  .catch(error => {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  });
+
+// Middleware to check if MongoDB is ready
+function requireMongo(req, res, next) {
+  if (!mongoReady || !filesCol || !bucket) {
+    return res.status(503).json({ 
+      error: 'Database not ready. Please try again in a moment.' 
+    });
+  }
+  next();
+}
 
 // LLM Adapters
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -367,8 +398,17 @@ function normalizeDate(v) {
   return dayjs(v).format('YYYY-MM-DD');
 }
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'ok', 
+    mongoReady,
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Routes
-app.post('/upload', upload.single('file'), async (req, res) => {
+app.post('/upload', requireMongo, upload.single('file'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'No file' });
     const { originalname, mimetype, buffer, size } = req.file;
@@ -396,7 +436,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
   }
 });
 
-app.get('/files', async (req, res) => {
+app.get('/files', requireMongo, async (req, res) => {
   try {
     const items = await filesCol
       .find({}, { projection: { _id: 0 } })
@@ -409,7 +449,7 @@ app.get('/files', async (req, res) => {
   }
 });
 
-app.get('/files/:id', async (req, res) => {
+app.get('/files/:id', requireMongo, async (req, res) => {
   try {
     const id = req.params.id;
     const _id = new ObjectId(id);
@@ -425,7 +465,7 @@ app.get('/files/:id', async (req, res) => {
   }
 });
 
-app.post('/query', async (req, res) => {
+app.post('/query', requireMongo, async (req, res) => {
   try {
     const { fileIds = [], query = '', charts: chartTypes } = req.body || {};
     if (!Array.isArray(fileIds) || fileIds.length === 0) {
