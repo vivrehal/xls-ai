@@ -8,9 +8,35 @@ import dayjs from 'dayjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
+
+// CORS configuration - allow multiple origins
+const allowedOrigins = process.env.CORS_ORIGINS.split(',').map(o => o.trim());
+
 app.use(cors({
-    origin: ['https://xls-ai.onrender.com', 'http://localhost:5173']
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in our allowed list
+    const isAllowed = allowedOrigins.some(allowedOrigin => {
+      if (typeof allowedOrigin === 'string') {
+        return allowedOrigin === origin;
+      } else if (allowedOrigin instanceof RegExp) {
+        return allowedOrigin.test(origin);
+      }
+      return false;
+    });
+    
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
 }));
+
 app.use(express.json({ limit: '4mb' }));
 
 // Mongo
