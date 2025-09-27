@@ -8,7 +8,16 @@ import dayjs from 'dayjs';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback) => {
+        const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',');
+        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    }
+}));
 app.use(express.json({ limit: '4mb' }));
 
 // Mongo
